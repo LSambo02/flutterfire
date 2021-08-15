@@ -25,7 +25,7 @@ class DocumentSnapshotPlatform extends PlatformInterface {
   /// This is used by the app-facing [DocumentSnapshot] to ensure that
   /// the object in which it's going to delegate calls has been
   /// constructed properly.
-  static verifyExtends(DocumentSnapshotPlatform instance) {
+  static void verifyExtends(DocumentSnapshotPlatform instance) {
     PlatformInterface.verifyToken(instance, _token);
   }
 
@@ -42,8 +42,10 @@ class DocumentSnapshotPlatform extends PlatformInterface {
   /// Metadata about this snapshot concerning its source and if it has local
   /// modifications.
   SnapshotMetadataPlatform get metadata {
-    return SnapshotMetadataPlatform(_data['metadata']['hasPendingWrites'],
-        _data['metadata']['isFromCache']);
+    return SnapshotMetadataPlatform(
+      _data['metadata']['hasPendingWrites'],
+      _data['metadata']['isFromCache'],
+    );
   }
 
   /// Signals whether or not the data exists.
@@ -55,7 +57,7 @@ class DocumentSnapshotPlatform extends PlatformInterface {
   DocumentReferencePlatform get reference => _firestore.doc(_pointer.path);
 
   /// Contains all the data of this snapshot.
-  Map<String, dynamic> data() {
+  Map<String, dynamic>? data() {
     return exists ? Map<String, dynamic>.from(_data['data']) : null;
   }
 
@@ -64,14 +66,16 @@ class DocumentSnapshotPlatform extends PlatformInterface {
   /// Data can be accessed by providing a dot-notated path or [FieldPath]
   /// which recursively finds the specified data. If no data could be found
   /// at the specified path, a [StateError] will be thrown.
-  dynamic get(dynamic field) {
-    assert(field != null);
-    assert(field is String || field is FieldPath,
-        "Supported [field] types are [String] and [FieldPath]");
+  dynamic get(Object field) {
+    assert(
+      field is String || field is FieldPath,
+      'Supported [field] types are [String] and [FieldPath]',
+    );
 
     if (!exists) {
       throw StateError(
-          'cannot get a field on a $DocumentSnapshotPlatform which does not exist');
+        'cannot get a field on a $DocumentSnapshotPlatform which does not exist',
+      );
     }
 
     dynamic _findKeyValueInMap(String key, Map<String, dynamic> map) {
@@ -80,22 +84,24 @@ class DocumentSnapshotPlatform extends PlatformInterface {
       }
 
       throw StateError(
-          'field does not exist within the $DocumentSnapshotPlatform');
+        'field does not exist within the $DocumentSnapshotPlatform',
+      );
     }
 
     FieldPath fieldPath;
     if (field is String) {
       fieldPath = FieldPath.fromString(field);
     } else {
-      fieldPath = field;
+      fieldPath = field as FieldPath;
     }
 
     List<String> components = fieldPath.components;
-    Map<String, dynamic> snapshotData = data();
 
-    _findComponent(int componentIndex, Map<String, dynamic> data) {
+    Map<String, dynamic>? snapshotData = data();
+
+    dynamic _findComponent(int componentIndex, Map<String, dynamic>? data) {
       bool isLast = componentIndex + 1 == components.length;
-      dynamic value = _findKeyValueInMap(components[componentIndex], data);
+      dynamic value = _findKeyValueInMap(components[componentIndex], data!);
 
       if (isLast) {
         return value;
@@ -106,7 +112,8 @@ class DocumentSnapshotPlatform extends PlatformInterface {
             componentIndex + 1, Map<String, dynamic>.from(value));
       } else {
         throw StateError(
-            'field does not exist within the $DocumentSnapshotPlatform');
+          'field does not exist within the $DocumentSnapshotPlatform',
+        );
       }
     }
 
@@ -118,5 +125,5 @@ class DocumentSnapshotPlatform extends PlatformInterface {
   /// Data can be accessed by providing a dot-notated path or [FieldPath]
   /// which recursively finds the specified data. If no data could be found
   /// at the specified path, a [StateError] will be thrown.
-  dynamic operator [](dynamic field) => get(field);
+  dynamic operator [](Object field) => get(field);
 }

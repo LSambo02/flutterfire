@@ -6,8 +6,6 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:firebase_storage_platform_interface/firebase_storage_platform_interface.dart';
-
 import '../../firebase_storage_platform_interface.dart';
 import 'method_channel_firebase_storage.dart';
 import 'method_channel_list_result.dart';
@@ -23,110 +21,145 @@ class MethodChannelReference extends ReferencePlatform {
 
   @override
   Future<void> delete() async {
-    await MethodChannelFirebaseStorage.channel
-        .invokeMethod('Reference#delete', <String, dynamic>{
-      'appName': storage.app.name,
-      'maxOperationRetryTime': storage.maxOperationRetryTime,
-      'maxUploadRetryTime': storage.maxUploadRetryTime,
-      'maxDownloadRetryTime': storage.maxDownloadRetryTime,
-      'bucket': storage.bucket,
-      'path': fullPath,
-    }).catchError(catchPlatformException);
+    try {
+      await MethodChannelFirebaseStorage.channel
+          .invokeMethod('Reference#delete', <String, dynamic>{
+        'appName': storage.app.name,
+        'maxOperationRetryTime': storage.maxOperationRetryTime,
+        'maxUploadRetryTime': storage.maxUploadRetryTime,
+        'maxDownloadRetryTime': storage.maxDownloadRetryTime,
+        'bucket': storage.bucket,
+        'host': storage.emulatorHost,
+        'port': storage.emulatorPort,
+        'path': fullPath,
+      });
+    } catch (e) {
+      throw convertPlatformException(e);
+    }
   }
 
   @override
   Future<String> getDownloadURL() async {
-    Map<String, dynamic> data = await MethodChannelFirebaseStorage.channel
-        .invokeMapMethod<String, dynamic>(
-            'Reference#getDownloadURL', <String, dynamic>{
-      'appName': storage.app.name,
-      'maxOperationRetryTime': storage.maxOperationRetryTime,
-      'maxUploadRetryTime': storage.maxUploadRetryTime,
-      'maxDownloadRetryTime': storage.maxDownloadRetryTime,
-      'bucket': storage.bucket,
-      'path': fullPath,
-    }).catchError(catchPlatformException);
+    try {
+      Map<String, dynamic>? data = await MethodChannelFirebaseStorage.channel
+          .invokeMapMethod<String, dynamic>(
+              'Reference#getDownloadURL', <String, dynamic>{
+        'appName': storage.app.name,
+        'maxOperationRetryTime': storage.maxOperationRetryTime,
+        'maxUploadRetryTime': storage.maxUploadRetryTime,
+        'maxDownloadRetryTime': storage.maxDownloadRetryTime,
+        'bucket': storage.bucket,
+        'host': storage.emulatorHost,
+        'port': storage.emulatorPort,
+        'path': fullPath,
+      });
 
-    return data['downloadURL'];
+      return data!['downloadURL'];
+    } catch (e) {
+      throw convertPlatformException(e);
+    }
   }
 
   @override
   Future<FullMetadata> getMetadata() async {
-    Map<String, dynamic> data = await MethodChannelFirebaseStorage.channel
-        .invokeMapMethod<String, dynamic>(
-            'Reference#getMetadata', <String, dynamic>{
-      'appName': storage.app.name,
-      'maxOperationRetryTime': storage.maxOperationRetryTime,
-      'maxUploadRetryTime': storage.maxUploadRetryTime,
-      'maxDownloadRetryTime': storage.maxDownloadRetryTime,
-      'bucket': storage.bucket,
-      'path': fullPath,
-    }).catchError(catchPlatformException);
+    try {
+      Map<String, dynamic>? data = await MethodChannelFirebaseStorage.channel
+          .invokeMapMethod<String, dynamic>(
+              'Reference#getMetadata', <String, dynamic>{
+        'appName': storage.app.name,
+        'maxOperationRetryTime': storage.maxOperationRetryTime,
+        'maxUploadRetryTime': storage.maxUploadRetryTime,
+        'maxDownloadRetryTime': storage.maxDownloadRetryTime,
+        'bucket': storage.bucket,
+        'host': storage.emulatorHost,
+        'port': storage.emulatorPort,
+        'path': fullPath,
+      });
 
-    return FullMetadata(data);
+      return FullMetadata(data!);
+    } catch (e) {
+      throw convertPlatformException(e);
+    }
   }
 
   @override
-  Future<ListResultPlatform> list(ListOptions options) async {
-    Map<String, dynamic> data = await MethodChannelFirebaseStorage.channel
-        .invokeMapMethod<String, dynamic>('Reference#list', <String, dynamic>{
-      'appName': storage.app.name,
-      'maxOperationRetryTime': storage.maxOperationRetryTime,
-      'maxUploadRetryTime': storage.maxUploadRetryTime,
-      'maxDownloadRetryTime': storage.maxDownloadRetryTime,
-      'bucket': storage.bucket,
-      'path': fullPath,
-      'options': <String, dynamic>{
-        'maxResults': options?.maxResults ?? 1000,
-        'pageToken': options?.pageToken,
-      },
-    }).catchError(catchPlatformException);
+  Future<ListResultPlatform> list([ListOptions? options]) async {
+    try {
+      Map<String, dynamic>? data = await MethodChannelFirebaseStorage.channel
+          .invokeMapMethod<String, dynamic>('Reference#list', <String, dynamic>{
+        'appName': storage.app.name,
+        'maxOperationRetryTime': storage.maxOperationRetryTime,
+        'maxUploadRetryTime': storage.maxUploadRetryTime,
+        'maxDownloadRetryTime': storage.maxDownloadRetryTime,
+        'bucket': storage.bucket,
+        'host': storage.emulatorHost,
+        'port': storage.emulatorPort,
+        'path': fullPath,
+        'options': <String, dynamic>{
+          'maxResults': options?.maxResults ?? 1000,
+          'pageToken': options?.pageToken,
+        },
+      });
 
-    return MethodChannelListResult(
-      storage,
-      nextPageToken: data['nextPageToken'],
-      items: List.from(data['items']),
-      prefixes: List.from(data['prefixes']),
-    );
+      return MethodChannelListResult(
+        storage,
+        nextPageToken: data!['nextPageToken'],
+        items: List.from(data['items']),
+        prefixes: List.from(data['prefixes']),
+      );
+    } catch (e) {
+      throw convertPlatformException(e);
+    }
   }
 
   @override
   Future<ListResultPlatform> listAll() async {
-    Map<String, dynamic> data = await MethodChannelFirebaseStorage.channel
-        .invokeMapMethod<String, dynamic>(
-            'Reference#listAll', <String, dynamic>{
-      'appName': storage.app.name,
-      'maxOperationRetryTime': storage.maxOperationRetryTime,
-      'maxUploadRetryTime': storage.maxUploadRetryTime,
-      'maxDownloadRetryTime': storage.maxDownloadRetryTime,
-      'bucket': storage.bucket,
-      'path': fullPath,
-    }).catchError(catchPlatformException);
-
-    return MethodChannelListResult(
-      storage,
-      nextPageToken: data['nextPageToken'],
-      items: List.from(data['items']),
-      prefixes: List.from(data['prefixes']),
-    );
+    try {
+      Map<String, dynamic>? data = await MethodChannelFirebaseStorage.channel
+          .invokeMapMethod<String, dynamic>(
+              'Reference#listAll', <String, dynamic>{
+        'appName': storage.app.name,
+        'maxOperationRetryTime': storage.maxOperationRetryTime,
+        'maxUploadRetryTime': storage.maxUploadRetryTime,
+        'maxDownloadRetryTime': storage.maxDownloadRetryTime,
+        'bucket': storage.bucket,
+        'host': storage.emulatorHost,
+        'port': storage.emulatorPort,
+        'path': fullPath,
+      });
+      return MethodChannelListResult(
+        storage,
+        nextPageToken: data!['nextPageToken'],
+        items: List.from(data['items']),
+        prefixes: List.from(data['prefixes']),
+      );
+    } catch (e) {
+      throw convertPlatformException(e);
+    }
   }
 
   @override
-  Future<Uint8List> getData(int maxSize) {
-    return MethodChannelFirebaseStorage.channel
-        .invokeMethod<Uint8List>('Reference#getData', <String, dynamic>{
-      'appName': storage.app.name,
-      'maxOperationRetryTime': storage.maxOperationRetryTime,
-      'maxUploadRetryTime': storage.maxUploadRetryTime,
-      'maxDownloadRetryTime': storage.maxDownloadRetryTime,
-      'bucket': storage.bucket,
-      'path': fullPath,
-      'maxSize': maxSize,
-    }).catchError(catchPlatformException);
+  Future<Uint8List?> getData(int maxSize) {
+    try {
+      return MethodChannelFirebaseStorage.channel
+          .invokeMethod<Uint8List>('Reference#getData', <String, dynamic>{
+        'appName': storage.app.name,
+        'maxOperationRetryTime': storage.maxOperationRetryTime,
+        'maxUploadRetryTime': storage.maxUploadRetryTime,
+        'maxDownloadRetryTime': storage.maxDownloadRetryTime,
+        'bucket': storage.bucket,
+        'host': storage.emulatorHost,
+        'port': storage.emulatorPort,
+        'path': fullPath,
+        'maxSize': maxSize,
+      });
+    } catch (e) {
+      throw convertPlatformException(e);
+    }
   }
 
   @override
-  TaskPlatform putData(Uint8List data, [SettableMetadata metadata]) {
+  TaskPlatform putData(Uint8List data, [SettableMetadata? metadata]) {
     int handle = MethodChannelFirebaseStorage.nextMethodChannelHandleId;
     MethodChannelFirebaseStorage.taskObservers[handle] =
         StreamController<TaskSnapshotPlatform>.broadcast();
@@ -134,21 +167,22 @@ class MethodChannelReference extends ReferencePlatform {
   }
 
   @override
-  TaskPlatform putBlob(dynamic data, [SettableMetadata metadata]) {
+  TaskPlatform putBlob(dynamic data, [SettableMetadata? metadata]) {
     throw UnimplementedError(
         'putBlob() is not supported on native platforms. Use [put], [putFile] or [putString] instead.');
   }
 
   @override
-  TaskPlatform putFile(File file, [SettableMetadata metadata]) {
+  TaskPlatform putFile(File file, [SettableMetadata? metadata]) {
     int handle = MethodChannelFirebaseStorage.nextMethodChannelHandleId;
     MethodChannelFirebaseStorage.taskObservers[handle] =
         StreamController<TaskSnapshotPlatform>.broadcast();
     return MethodChannelPutFileTask(handle, storage, fullPath, file, metadata);
   }
 
+  @override
   TaskPlatform putString(String data, PutStringFormat format,
-      [SettableMetadata metadata]) {
+      [SettableMetadata? metadata]) {
     int handle = MethodChannelFirebaseStorage.nextMethodChannelHandleId;
     MethodChannelFirebaseStorage.taskObservers[handle] =
         StreamController<TaskSnapshotPlatform>.broadcast();
@@ -156,22 +190,30 @@ class MethodChannelReference extends ReferencePlatform {
         handle, storage, fullPath, data, format, metadata);
   }
 
+  @override
   Future<FullMetadata> updateMetadata(SettableMetadata metadata) async {
-    Map<String, dynamic> data = await MethodChannelFirebaseStorage.channel
-        .invokeMapMethod<String, dynamic>(
-            'Reference#updateMetadata', <String, dynamic>{
-      'appName': storage.app.name,
-      'maxOperationRetryTime': storage.maxOperationRetryTime,
-      'maxUploadRetryTime': storage.maxUploadRetryTime,
-      'maxDownloadRetryTime': storage.maxDownloadRetryTime,
-      'bucket': storage.bucket,
-      'path': fullPath,
-      'metadata': metadata.asMap(),
-    }).catchError(catchPlatformException);
+    try {
+      Map<String, dynamic>? data = await MethodChannelFirebaseStorage.channel
+          .invokeMapMethod<String, dynamic>(
+              'Reference#updateMetadata', <String, dynamic>{
+        'appName': storage.app.name,
+        'maxOperationRetryTime': storage.maxOperationRetryTime,
+        'maxUploadRetryTime': storage.maxUploadRetryTime,
+        'maxDownloadRetryTime': storage.maxDownloadRetryTime,
+        'bucket': storage.bucket,
+        'host': storage.emulatorHost,
+        'port': storage.emulatorPort,
+        'path': fullPath,
+        'metadata': metadata.asMap(),
+      });
 
-    return FullMetadata(data);
+      return FullMetadata(data!);
+    } catch (e) {
+      throw convertPlatformException(e);
+    }
   }
 
+  @override
   TaskPlatform writeToFile(File file) {
     int handle = MethodChannelFirebaseStorage.nextMethodChannelHandleId;
     MethodChannelFirebaseStorage.taskObservers[handle] =

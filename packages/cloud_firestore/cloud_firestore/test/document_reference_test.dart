@@ -11,15 +11,15 @@ import './mock.dart';
 
 void main() {
   setupCloudFirestoreMocks();
-  FirebaseFirestore firestore;
-  FirebaseFirestore firestoreSecondary;
+  late FirebaseFirestore firestore;
+  late FirebaseFirestore firestoreSecondary;
 
-  group("$DocumentReference", () {
+  group('$DocumentReference', () {
     setUpAll(() async {
       await Firebase.initializeApp();
       FirebaseApp secondaryApp = await Firebase.initializeApp(
           name: 'foo',
-          options: FirebaseOptions(
+          options: const FirebaseOptions(
             apiKey: '123',
             appId: '123',
             messagingSenderId: '123',
@@ -40,10 +40,20 @@ void main() {
       expect(ref == firestoreSecondary.doc('foo/bar'), isFalse);
       expect(ref2 == firestoreSecondary.doc('foo/bar/baz/bert'), isFalse);
 
-      expect(ref == ref2, isFalse);
+      expect(ref.hashCode, ref.hashCode);
+      expect(ref, ref);
+      expect(ref.hashCode, isNot(ref2.hashCode));
+      expect(ref, isNot(ref2));
     });
 
-    test("returns document() returns a $DocumentReference", () {
+    test('toString', () async {
+      expect(
+        firestore.doc('foo/bar').toString(),
+        'DocumentReference<Map<String, dynamic>>(foo/bar)',
+      );
+    });
+
+    test('returns document() returns a $DocumentReference', () {
       DocumentReference ref = firestore.doc('foo/bar');
       DocumentReference ref2 = firestore.doc('foo/bar/baz/bert');
 
@@ -51,7 +61,7 @@ void main() {
       expect(ref2, isA<DocumentReference>());
     });
 
-    test("returns the same firestore instance", () {
+    test('returns the same firestore instance', () {
       DocumentReference ref = firestore.doc('foo/bar');
       DocumentReference ref2 = firestoreSecondary.doc('foo/bar');
 
@@ -59,7 +69,7 @@ void main() {
       expect(ref2.firestore, equals(firestoreSecondary));
     });
 
-    test("returns the correct ID", () {
+    test('returns the correct ID', () {
       DocumentReference ref = firestore.doc('foo/bar');
       DocumentReference ref2 = firestore.doc('foo/bar/baz/bert');
 
@@ -69,13 +79,13 @@ void main() {
     });
 
     group('.parent', () {
-      test("returns a $CollectionReference", () {
+      test('returns a $CollectionReference', () {
         DocumentReference ref = firestore.doc('foo/bar');
 
         expect(ref.parent, isA<CollectionReference>());
       });
 
-      test("returns the correct $CollectionReference", () {
+      test('returns the correct $CollectionReference', () {
         DocumentReference ref = firestore.doc('foo/bar');
         CollectionReference colRef = firestore.collection('foo');
 
@@ -85,7 +95,6 @@ void main() {
 
     test('path must be a non-empty string', () {
       CollectionReference ref = firestore.collection('foo');
-      expect(() => firestore.doc(null), throwsAssertionError);
       expect(() => firestore.doc(''), throwsAssertionError);
       expect(() => ref.doc(''), throwsAssertionError);
     });
@@ -109,9 +118,173 @@ void main() {
           throwsAssertionError);
     });
 
-    test('data must not be null', () {
-      DocumentReference ref = firestore.collection('foo').doc();
-      expect(() => ref.set(null), throwsAssertionError);
+    group('withConverter', () {
+      test('can use withConverter again', () {
+        int fromFirestore(DocumentSnapshot snapshot, SnapshotOptions? _) => 42;
+        Map<String, dynamic> toFirestore(Object value, SetOptions? _) => {};
+
+        final foo = firestore.doc('foo/42');
+
+        expect(
+          foo
+              .withConverter<String>(
+                fromFirestore: (
+                  DocumentSnapshot<Map<String, dynamic>> snapshot,
+                  options,
+                ) =>
+                    '',
+                toFirestore: (String value, options) => {},
+              )
+              .withConverter<int>(
+                fromFirestore: fromFirestore,
+                toFirestore: toFirestore,
+              ),
+          foo.withConverter<int>(
+            fromFirestore: fromFirestore,
+            toFirestore: toFirestore,
+          ),
+        );
+      });
+
+      test('implements ==', () {
+        int fromFirestore(DocumentSnapshot snapshot, SnapshotOptions? _) => 42;
+        Map<String, dynamic> toFirestore(Object value, SetOptions? _) => {};
+
+        final foo = firestore.doc('foo/42');
+        final bar = firestore.doc('bar/42');
+
+        final intFoo = foo.withConverter<int>(
+          fromFirestore: fromFirestore,
+          toFirestore: toFirestore,
+        );
+
+        // utilities to check == in both directions as it is possible that
+        // a == b is true but b == a is false since the former invoke a's == operator
+        // while the latter invoke b's == operator
+        void expectEqual(Object? a, Object? b) {
+          expect(a, b);
+          expect(b, a);
+        }
+
+        void expectNotEqual(Object? a, Object? b) {
+          expect(a, isNot(b));
+          expect(b, isNot(a));
+        }
+
+        expectEqual(
+          foo.withConverter<int>(
+            fromFirestore: fromFirestore,
+            toFirestore: toFirestore,
+          ),
+          intFoo,
+        );
+
+        expectNotEqual(
+          bar.withConverter<int>(
+            fromFirestore: fromFirestore,
+            toFirestore: toFirestore,
+          ),
+          intFoo,
+        );
+
+        expectNotEqual(
+          foo.withConverter<Object>(
+            fromFirestore: fromFirestore,
+            toFirestore: toFirestore,
+          ),
+          intFoo,
+        );
+
+        expectNotEqual(
+          foo.withConverter<int>(
+            fromFirestore: (_, __) => 42,
+            toFirestore: toFirestore,
+          ),
+          intFoo,
+        );
+
+        expectNotEqual(
+          foo.withConverter<int>(
+            fromFirestore: fromFirestore,
+            toFirestore: (_, __) => {},
+          ),
+          intFoo,
+        );
+      });
+
+      test('toString', () {
+        final foo = firestore.doc('foo/42');
+
+        expect(
+          foo
+              .withConverter<int>(
+                fromFirestore: (map, _) => 42,
+                toFirestore: (value, _) => {},
+              )
+              .toString(),
+          'DocumentReference<int>(foo/42)',
+        );
+
+        expect(
+          foo
+              .withConverter<double>(
+                fromFirestore: (map, _) => 42,
+                toFirestore: (value, _) => {},
+              )
+              .toString(),
+          'DocumentReference<double>(foo/42)',
+        );
+      });
+
+      test('id', () {
+        final foo = firestore.doc('foo/42');
+
+        expect(
+          foo
+              .withConverter(
+                fromFirestore: (_, __) => 42,
+                toFirestore: (_, __) => {},
+              )
+              .id,
+          foo.id,
+        );
+      });
+
+      test('path', () {
+        final subCollection =
+            firestore.collection('foo').doc('42').collection('bar').doc('21');
+
+        expect(
+          subCollection
+              .withConverter(
+                fromFirestore: (_, __) => 42,
+                toFirestore: (_, __) => {},
+              )
+              .path,
+          subCollection.path,
+        );
+      });
+
+      test('parent', () {
+        int fromFirestore(DocumentSnapshot snapshot, SnapshotOptions? _) => 42;
+        Map<String, dynamic> toFirestore(Object value, SetOptions? _) => {};
+
+        final subCollection =
+            firestore.collection('foo').doc('42').collection('bar').doc('21');
+
+        expect(
+          subCollection
+              .withConverter(
+                fromFirestore: fromFirestore,
+                toFirestore: toFirestore,
+              )
+              .parent,
+          subCollection.parent.withConverter(
+            fromFirestore: fromFirestore,
+            toFirestore: toFirestore,
+          ),
+        );
+      });
     });
   });
 }

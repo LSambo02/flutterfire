@@ -41,11 +41,15 @@ class MethodChannelWriteBatch extends WriteBatchPlatform {
       return;
     }
 
-    await MethodChannelFirebaseFirestore.channel
-        .invokeMethod<void>('WriteBatch#commit', <String, dynamic>{
-      'firestore': _firestore,
-      'writes': _writes,
-    }).catchError(catchPlatformException);
+    try {
+      await MethodChannelFirebaseFirestore.channel
+          .invokeMethod<void>('WriteBatch#commit', <String, dynamic>{
+        'firestore': _firestore,
+        'writes': _writes,
+      });
+    } catch (e) {
+      throw convertPlatformException(e);
+    }
   }
 
   @override
@@ -59,7 +63,7 @@ class MethodChannelWriteBatch extends WriteBatchPlatform {
 
   @override
   void set(String documentPath, Map<String, dynamic> data,
-      [SetOptions options]) {
+      [SetOptions? options]) {
     _assertNotCommitted();
     _writes.add(<String, dynamic>{
       'path': documentPath,

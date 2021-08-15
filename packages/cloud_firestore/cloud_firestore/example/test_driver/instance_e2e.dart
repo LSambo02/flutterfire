@@ -2,6 +2,8 @@
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 
+// @dart=2.9
+
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
@@ -10,16 +12,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 void runInstanceTests() {
   group('$FirebaseFirestore.instance', () {
-    FirebaseFirestore firestore;
+    FirebaseFirestore /*?*/ firestore;
 
     setUpAll(() async {
       firestore = FirebaseFirestore.instance;
     });
 
     test('snapshotsInSync()', () async {
-      if (kIsWeb) return;
-
-      DocumentReference documentReference =
+      DocumentReference<Map<String, dynamic>> documentReference =
           firestore.doc('flutter-tests/insync');
 
       // Ensure deleted
@@ -41,7 +41,7 @@ void runInstanceTests() {
       });
 
       // Allow the snapshots to trigger...
-      await Future.delayed(Duration(seconds: 1));
+      await Future.delayed(const Duration(seconds: 1));
 
       await documentReference.set({'foo': 'bar'});
 
@@ -65,7 +65,7 @@ void runInstanceTests() {
 
       // Write some data while online
       await firestore.enableNetwork();
-      DocumentReference documentReference =
+      DocumentReference<Map<String, dynamic>> documentReference =
           firestore.doc('flutter-tests/enable-network');
       await documentReference.set({'foo': 'bar'});
 
@@ -93,7 +93,7 @@ void runInstanceTests() {
 
       // Write some data while online
       await firestore.enableNetwork();
-      DocumentReference documentReference =
+      DocumentReference<Map<String, dynamic>> documentReference =
           firestore.doc('flutter-tests/disable-network');
       await documentReference.set({'foo': 'bar'});
 
@@ -101,7 +101,8 @@ void runInstanceTests() {
       await firestore.disableNetwork();
 
       // Get data from cache
-      DocumentSnapshot documentSnapshot = await documentReference.get();
+      DocumentSnapshot<Map<String, dynamic>> documentSnapshot =
+          await documentReference.get();
       expect(documentSnapshot.metadata.isFromCache, isTrue);
       expect(documentSnapshot.data()['foo'], equals('bar'));
 
@@ -120,9 +121,9 @@ void runInstanceTests() {
       // the instance, and then check whether clearing succeeds.
       try {
         await firestore.clearPersistence();
-        fail("Should have thrown");
+        fail('Should have thrown');
       } on FirebaseException catch (e) {
-        expect(e.code, equals("failed-precondition"));
+        expect(e.code, equals('failed-precondition'));
       } catch (e) {
         fail(e);
       }

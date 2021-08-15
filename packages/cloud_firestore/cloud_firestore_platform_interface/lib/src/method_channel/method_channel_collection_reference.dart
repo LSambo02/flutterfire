@@ -19,15 +19,16 @@ import 'utils/auto_id_generator.dart';
 /// [CollectionReferencePlatform] and this class started throwing compilation
 /// errors, now you know why.
 class MethodChannelCollectionReference extends MethodChannelQuery
-    implements CollectionReferencePlatform {
-  Pointer _pointer;
-
+    implements
+// ignore: avoid_implementing_value_types
+        CollectionReferencePlatform {
   /// Create a [MethodChannelCollectionReference] instance.
   MethodChannelCollectionReference(
       FirebaseFirestorePlatform firestore, String path)
-      : super(firestore, path) {
-    _pointer = Pointer(path);
-  }
+      : _pointer = Pointer(path),
+        super(firestore, path);
+
+  final Pointer _pointer;
 
   /// Returns the identifier of this referenced collection.
   @override
@@ -36,8 +37,8 @@ class MethodChannelCollectionReference extends MethodChannelQuery
   /// A string containing the slash-separated path to this instance
   /// (relative to the root of the database).
   @override
-  DocumentReferencePlatform get parent {
-    String parentPath = _pointer.parentPath();
+  DocumentReferencePlatform? get parent {
+    String? parentPath = _pointer.parentPath();
     return parentPath == null
         ? null
         : MethodChannelDocumentReference(firestore, parentPath);
@@ -48,7 +49,7 @@ class MethodChannelCollectionReference extends MethodChannelQuery
   String get path => _pointer.path;
 
   @override
-  DocumentReferencePlatform doc([String path]) {
+  DocumentReferencePlatform doc([String? path]) {
     String documentPath;
 
     if (path != null) {
